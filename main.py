@@ -2,6 +2,7 @@
 A simulation of an M/M/c queueing system.
 """
 
+import matplotlib.pyplot as plt
 import random
 
 class Player:
@@ -246,17 +247,16 @@ class SimulationModel():
         
         while time < simulation_time:
             
-            snapshots[time] = Snapshot(players, queue)
             
             new_player = Player(time)
             no_of_players += 1
             players[no_of_players] = new_player 
 
-
             new_player.enter_queue(self.queue)
             self.queue.clean_up_queue(time)
             
             time += random.expovariate(self.arrival_rate)
+            snapshots[time] = Snapshot(players, self.queue)
 
         
         return players, snapshots 
@@ -268,8 +268,27 @@ class Snapshot:
         Stores the state of the system for analysis 
         """
         
-        self.time = time
         self.queue_length = len(queue.queue)
         self.average_cost = sum(players[ID].cost for ID in players )/len(players)
 
 
+class DataAnalyser:
+    
+    def plot_queue_length(self, time, arrival_rate, service_rate, servers):
+        """
+        Function to plot the length of a queue over time
+        """
+
+        a = SimulationModel(arrival_rate, service_rate, servers)
+        players, snaps = a.main_simulation_loop(time)
+
+        times = [snap for snap in snaps]
+        times.sort()
+
+        plot_data = [[snap for snap in snaps],[snaps[snap].queue_length for snap in snaps]]
+
+        plt.plot(plot_data[0],plot_data[1])
+        plt.show()
+
+D = DataAnalyser()
+D.plot_queue_length(50,10,5,3)
