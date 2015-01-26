@@ -211,11 +211,11 @@ class SimulationModel():
 
             >>> random.seed(4)
             >>> a = SimulationModel(6, 7, 2)
-            >>> players = a.main_simulation_loop(20)
+            >>> players, snaps = a.main_simulation_loop(20)
             >>> len(players)
             129
             >>> a = SimulationModel(10, 2, 6)
-            >>> players = a.main_simulation_loop(20)
+            >>> players, snaps = a.main_simulation_loop(20)
             >>> len(players)
             177
             >>> for ID in players:
@@ -225,14 +225,14 @@ class SimulationModel():
         A negative time causes no players to move through the model::
 
             >>> a = SimulationModel(10, 2, 6)
-            >>> players = a.main_simulation_loop(-20)
+            >>> players,snaps = a.main_simulation_loop(-20)
             >>> len(players)
             0
 
         Cant have a negative amount of servers::
 
             >>> a = SimulationModel(6, 7, -2)
-            >>> players = a.main_simulation_loop(20)
+            >>> players, snaps = a.main_simulation_loop(20)
             Traceback (most recent call last):
             ...
             ValueError: min() arg is an empty sequence
@@ -241,20 +241,35 @@ class SimulationModel():
         
         time = 0
         players = {}
+        snapshots = {}
         no_of_players = 0
         
         while time < simulation_time:
+            
+            snapshots[time] = Snapshot(players, queue)
             
             new_player = Player(time)
             no_of_players += 1
             players[no_of_players] = new_player 
 
-            print len(self.queue.queue)
+
             new_player.enter_queue(self.queue)
             self.queue.clean_up_queue(time)
-
+            
             time += random.expovariate(self.arrival_rate)
 
-        return players        
+        
+        return players, snapshots 
+
+class Snapshot:
+   
+    def __init__(self, players, queue):
+        """
+        Stores the state of the system for analysis 
+        """
+        
+        self.time = time
+        self.queue_length = len(queue.queue)
+        self.average_cost = sum(players[ID].cost for ID in players )/len(players)
 
 
