@@ -285,10 +285,10 @@ class DataAnalyser:
         times = [snap for snap in snaps]
         times.sort()
 
-        plot_data = [[snap for snap in snaps],[snaps[snap].queue_length for snap in snaps]]
+        plot_data = [[time for time in times],[snaps[time].queue_length for time in times]]
 
         plt.plot(plot_data[0],plot_data[1])
         plt.show()
 
 D = DataAnalyser()
-D.plot_queue_length(50,10,5,3)
+D.plot_queue_length(500,14,5,3)
