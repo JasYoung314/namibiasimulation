@@ -17,6 +17,13 @@ class Player:
             >>> a.arrival_time
             10
 
+            >>> a = Player(20)
+            >>> a.arrival_time
+            20
+
+            >>> a = Player(30)
+            >>> a.arrival_time
+            30
         """
 
         self.arrival_time = arrival_time
@@ -101,6 +108,7 @@ class Player:
         self.cost = self.service_end_time - self.arrival_time
 
         queue.next_available_times[next_available_server] = self.service_end_time
+        queue.queue.append(self)
 
 class Queue:
     def __init__(self, service_rate, no_of_servers = 1):
@@ -201,10 +209,33 @@ class SimulationModel():
 
         TESTS::
 
-            >>> random.seed(2)
+            >>> random.seed(4)
             >>> a = SimulationModel(6, 7, 2)
             >>> players = a.main_simulation_loop(20)
             >>> len(players)
+            129
+            >>> a = SimulationModel(10, 2, 6)
+            >>> players = a.main_simulation_loop(20)
+            >>> len(players)
+            177
+            >>> for ID in players:
+            ...     if players[ID].cost < 0:
+            ...         print player.cost
+
+        A negative time causes no players to move through the model::
+
+            >>> a = SimulationModel(10, 2, 6)
+            >>> players = a.main_simulation_loop(-20)
+            >>> len(players)
+            0
+
+        Cant have a negative amount of servers::
+
+            >>> a = SimulationModel(6, 7, -2)
+            >>> players = a.main_simulation_loop(20)
+            Traceback (most recent call last):
+            ...
+            ValueError: min() arg is an empty sequence
          
         """
         
@@ -218,7 +249,12 @@ class SimulationModel():
             no_of_players += 1
             players[no_of_players] = new_player 
 
+            print len(self.queue.queue)
             new_player.enter_queue(self.queue)
             self.queue.clean_up_queue(time)
 
+            time += random.expovariate(self.arrival_rate)
+
         return players        
+
+
