@@ -1,7 +1,19 @@
 """
 A simulation of an M/M/c queueing system.
-"""
 
+Usage: main.py [options] <arrival_rate> <service_rate> <servers> <time>
+
+Arguments:
+    arrival_rate rate of arrival into the queue
+    service_rate rate at which each of the servers work
+    servers number of servers at the queueing system
+    time length of time to run the simulation model
+Options:
+    --cost_graph  generates a grpah of average cost over time
+"""
+from __future__ import division
+
+from docopt import docopt
 import matplotlib.pyplot as plt
 import random
 
@@ -274,7 +286,27 @@ class Snapshot:
 
 class DataAnalyser:
     
-    def plot_queue_length(self, time, arrival_rate, service_rate, servers):
+    def plot_expected_length_stay(self, time, arrival_rate, service_rate, servers):
+        """
+        Function to plot the average cost per player in the queueing system
+        """
+
+        a = SimulationModel(arrival_rate, service_rate, servers)
+        players, snaps = a.main_simulation_loop(time)
+
+        times = [snap for snap in snaps]
+        times.sort()
+
+        sim_data = [[time for time in times],[snaps[time].average_cost for time in times]]
+        theoretical_data = [[time for time in times],[1/(service_rate - arrival_rate) for time in times]]
+        
+        plt.plot(theoretical_data[0],theoretical_data[1], label = 'Expected Value')
+        plt.plot(sim_data[0],sim_data[1], label = 'Simulation Data')
+        plt.xlabel('Time')
+        plt.ylabel('Average Cost per player')
+        plt.show()
+
+    def plot_varying_lambda(self, time, arrival_rate, service_rate, servers):
         """
         Function to plot the length of a queue over time
         """
@@ -285,10 +317,24 @@ class DataAnalyser:
         times = [snap for snap in snaps]
         times.sort()
 
-        plot_data = [[time for time in times],[snaps[time].queue_length for time in times]]
-
-        plt.plot(plot_data[0],plot_data[1])
+        sim_data = [[time for time in times],[snaps[time].average_cost for time in times]]
+        theoretical_data = [[time for time in times],[1/(service_rate - arrival_rate) for time in times]]
+        
+        plt.plot(theoretical_data[0],theoretical_data[1])
+        plt.plot(sim_data[0],sim_data[1])
         plt.show()
 
-D = DataAnalyser()
-D.plot_queue_length(500,14,5,3)
+
+if __name__ == '__main__':
+    arguments = docopt(__doc__)
+
+    print arguments
+    arrival_rate   =eval( arguments['<arrival_rate>'])
+    service_rate =eval( arguments['<service_rate>'])
+    servers =eval( arguments['<servers>'])
+    time =eval( arguments['<time>'])
+    cost_graph = ['--cost_graph']
+
+    if cost_graph:
+        D = DataAnalyser()
+        D.plot_expected_length_stay(time,arrival_rate,service_rate,servers)
