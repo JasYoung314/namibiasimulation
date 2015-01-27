@@ -10,7 +10,7 @@ Arguments:
     time length of time to run the simulation model
 Options:
     --cost_graph  generates a grpah of average cost over time
-    --lmbda_graph  generates a grpah of average cost over time
+    --lmbda_graph  generates a graph of average cost over time
 """
 from __future__ import division
 
