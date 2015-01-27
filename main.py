@@ -10,6 +10,7 @@ Arguments:
     time length of time to run the simulation model
 Options:
     --cost_graph  generates a grpah of average cost over time
+    --lmbda_graph  generates a grpah of average cost over time
 """
 from __future__ import division
 
@@ -213,7 +214,7 @@ class SimulationModel():
         self.arrival_rate = arrival_rate
         self.queue = Queue(service_rate, no_of_servers)
 
-    def main_simulation_loop(self, simulation_time):
+    def main_simulation_loop(self, simulation_time, snap_shot = True):
 
         """
         Runs the simulation model and outputs performance measures
@@ -268,7 +269,8 @@ class SimulationModel():
             self.queue.clean_up_queue(time)
             
             time += random.expovariate(self.arrival_rate)
-            snapshots[time] = Snapshot(players, self.queue)
+            if snap_shot:
+                snapshots[time] = Snapshot(players, self.queue)
 
         
         return players, snapshots 
@@ -306,22 +308,24 @@ class DataAnalyser:
         plt.ylabel('Average Cost per player')
         plt.show()
 
-    def plot_varying_lambda(self, time, arrival_rate, service_rate, servers):
+    def plot_varying_lambda(self, time, max_lmbda, service_rate, servers):
         """
         Function to plot the length of a queue over time
         """
-
-        a = SimulationModel(arrival_rate, service_rate, servers)
-        players, snaps = a.main_simulation_loop(time)
-
-        times = [snap for snap in snaps]
-        times.sort()
-
-        sim_data = [[time for time in times],[snaps[time].average_cost for time in times]]
-        theoretical_data = [[time for time in times],[1/(service_rate - arrival_rate) for time in times]]
         
-        plt.plot(theoretical_data[0],theoretical_data[1])
+        sim_data = [[],[]]
+
+        for lmbda in range(1, max_lmbda):
+            print lmbda
+            a = SimulationModel(lmbda, service_rate, servers)
+            players, snaps = a.main_simulation_loop(time, snap_shot = False)
+            sim_data[0].append(lmbda)
+            sim_data[1].append(sum(players[ID].cost for ID in players)/len(players))
+            
+                
         plt.plot(sim_data[0],sim_data[1])
+        plt.xlabel('Demand')
+        plt.ylabel('Average Cost per player')
         plt.show()
 
 
@@ -333,8 +337,12 @@ if __name__ == '__main__':
     service_rate =eval( arguments['<service_rate>'])
     servers =eval( arguments['<servers>'])
     time =eval( arguments['<time>'])
-    cost_graph = ['--cost_graph']
+    cost_graph =  arguments['--cost_graph']
+    lmbda_graph = arguments['--lmbda_graph']
 
     if cost_graph:
         D = DataAnalyser()
         D.plot_expected_length_stay(time,arrival_rate,service_rate,servers)
+    if lmbda_graph:
+        D = DataAnalyser()
+        D.plot_varying_lambda(time,arrival_rate,service_rate,servers)
