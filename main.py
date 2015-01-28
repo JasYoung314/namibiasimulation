@@ -9,8 +9,8 @@ Arguments:
     servers number of servers at the queueing system
     time length of time to run the simulation model
 Options:
-    --cost_graph  generates a grpah of average cost over time
-    --lmbda_graph  generates a graph of average cost over time for varying demand
+    --wait_graph  generates a grpah of average wait over time
+    --lmbda_graph  generates a graph of average wait over time for varying demand
     --length_graph  generates a graph of the length of the queue
 """
 from __future__ import division
@@ -20,6 +20,10 @@ import matplotlib.pyplot as plt
 import random
 
 class Player:
+    """
+    A class for the individual people moving through the queue
+    """
+
     def __init__(self, arrival_time):
         """
         Stores the initial data
@@ -61,7 +65,7 @@ class Player:
             '0.00'
             >>> '%.02f' %a.service_end_time
             '0.14'
-            >>> '%.02f' %a.cost
+            >>> '%.02f' %a.wait
             '0.14'
             >>> ['%.02f' %e for e in q.next_available_times]
             ['0.14', '0.00']
@@ -76,7 +80,7 @@ class Player:
             '0.10'
             >>> '%.02f' %a.service_end_time
             '1.98'
-            >>> '%.02f' %a.cost
+            >>> '%.02f' %a.wait
             '1.88'
             >>> ['%.02f' %e for e in q.next_available_times]
             ['0.14', '1.98']
@@ -91,7 +95,7 @@ class Player:
             '0.14'
             >>> '%.02f' %a.service_end_time
             '1.59'
-            >>> '%.02f' %a.cost
+            >>> '%.02f' %a.wait
             '1.47'
             >>> ['%.02f' %e for e in q.next_available_times]
             ['1.59', '1.98']
@@ -106,7 +110,7 @@ class Player:
             '2.00'
             >>> '%.02f' %a.service_end_time
             '2.29'
-            >>> '%.02f' %a.cost
+            >>> '%.02f' %a.wait
             '0.29'
             >>> ['%.02f' %e for e in q.next_available_times]
             ['2.29', '1.98']
@@ -120,7 +124,7 @@ class Player:
         self.service_start_time = max(self.arrival_time, next_available_time)
         self.service_end_time = self.service_start_time + self.service_time
 
-        self.cost = self.service_end_time - self.arrival_time
+        self.wait = self.service_end_time - self.arrival_time
 
         queue.next_available_times[next_available_server] = self.service_end_time
         queue.queue.append(self)
@@ -255,8 +259,8 @@ class SimulationModel():
             >>> len(players)
             177
             >>> for ID in players:
-            ...     if players[ID].cost < 0:
-            ...         print player.cost
+            ...     if players[ID].wait < 0:
+            ...         print player.wait
 
         A negative time causes no players to move through the model::
 
@@ -307,14 +311,14 @@ class Snapshot:
         """
         
         self.queue_length = len(queue.queue)
-        self.average_cost = sum(players[ID].cost for ID in players )/len(players)
+        self.average_wait = sum(players[ID].wait for ID in players )/len(players)
 
 
 class DataAnalyser:
     
     def plot_expected_length_stay(self, time, arrival_rate, service_rate, servers):
         """
-        Function to plot the average cost per player in the queueing system
+        Function to plot the average wait per player in the queueing system
         """
 
         a = SimulationModel(arrival_rate, service_rate, servers)
@@ -323,7 +327,7 @@ class DataAnalyser:
         times = [snap for snap in snaps]
         times.sort()
 
-        sim_data = [[time for time in times],[snaps[time].average_cost for time in times]]
+        sim_data = [[time for time in times],[snaps[time].average_wait for time in times]]
         theoretical_data = [[time for time in times],[1/(service_rate - arrival_rate) for time in times]]
         
         plt.plot(theoretical_data[0],theoretical_data[1], label = 'Expected Value')
@@ -344,7 +348,7 @@ class DataAnalyser:
             a = SimulationModel(lmbda, service_rate, servers)
             players, snaps = a.main_simulation_loop(time, snap_shot = False)
             sim_data[0].append(lmbda)
-            sim_data[1].append(sum(players[ID].cost for ID in players)/len(players))
+            sim_data[1].append(sum(players[ID].wait for ID in players)/len(players))
             
                 
         plt.plot(sim_data[0],sim_data[1])
@@ -354,7 +358,7 @@ class DataAnalyser:
 
     def plot_length(self, time, arrival_rate, service_rate, servers):
         """
-        Function to plot the average cost per player in the queueing system
+        Function to plot the average wait per player in the queueing system
         """
 
         a = SimulationModel(arrival_rate, service_rate, servers)
@@ -374,15 +378,15 @@ class DataAnalyser:
 if __name__ == '__main__':
     arguments = docopt(__doc__)
 
-    arrival_rate   =eval( arguments['<arrival_rate>'])
-    service_rate =eval( arguments['<service_rate>'])
-    servers =eval( arguments['<servers>'])
-    time =eval( arguments['<time>'])
-    cost_graph =  arguments['--cost_graph']
+    arrival_rate   = eval(arguments['<arrival_rate>'])
+    service_rate = eval(arguments['<service_rate>'])
+    servers = eval(arguments['<servers>'])
+    time = eval(arguments['<time>'])
+    wait_graph =  arguments['--wait_graph']
     lmbda_graph = arguments['--lmbda_graph']
     length_graph = arguments['--length_graph']
 
-    if cost_graph:
+    if wait_graph:
         D = DataAnalyser()
         D.plot_expected_length_stay(time,arrival_rate,service_rate,servers)
     if length_graph:
