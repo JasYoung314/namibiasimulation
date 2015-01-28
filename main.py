@@ -10,7 +10,8 @@ Arguments:
     time length of time to run the simulation model
 Options:
     --cost_graph  generates a grpah of average cost over time
-    --lmbda_graph  generates a graph of average cost over time
+    --lmbda_graph  generates a graph of average cost over time for varying demand
+    --length_graph  generates a graph of the length of the queue
 """
 from __future__ import division
 
@@ -125,6 +126,10 @@ class Player:
         queue.queue.append(self)
 
 class Queue:
+    """
+    A class for the queue with multiple servers
+    """
+
     def __init__(self, service_rate, no_of_servers = 1):
         """
         Stores the initial parameters of the queue
@@ -139,6 +144,16 @@ class Queue:
             >>> a.next_available_times
             [0, 0, 0, 0]
 
+            >>> a = Queue(2, 6)
+            >>> a.service_rate
+            2
+            >>> a.next_available_times
+            [0, 0, 0, 0, 0, 0]
+
+            >>> a = Queue(3, 4.2)
+            Traceback (most recent call last):
+            ...
+            TypeError: range() integer end argument expected, got float.
         """
         
         self.service_rate = service_rate
@@ -190,11 +205,18 @@ class Queue:
             >>> q.clean_up_queue(13)
             >>> len(q.queue)
             1
+            >>> q.clean_up_queue(13.5)
+            >>> len(q.queue)
+            1
         """
 
         self.queue = [Player for Player in self.queue if Player.service_end_time > time]
 
 class SimulationModel():
+    
+    """
+    A class for the simulation model
+    """
     
     def __init__(self, arrival_rate, service_rate, no_of_servers):
         """
@@ -269,6 +291,8 @@ class SimulationModel():
             self.queue.clean_up_queue(time)
             
             time += random.expovariate(self.arrival_rate)
+
+            
             if snap_shot:
                 snapshots[time] = Snapshot(players, self.queue)
 
@@ -305,6 +329,7 @@ class DataAnalyser:
         plt.plot(theoretical_data[0],theoretical_data[1], label = 'Expected Value')
         plt.plot(sim_data[0],sim_data[1], label = 'Simulation Data')
         plt.xlabel('Time')
+        plt.legend()
         plt.ylabel('Average Cost per player')
         plt.show()
 
@@ -316,7 +341,6 @@ class DataAnalyser:
         sim_data = [[],[]]
 
         for lmbda in range(1, max_lmbda):
-            print lmbda
             a = SimulationModel(lmbda, service_rate, servers)
             players, snaps = a.main_simulation_loop(time, snap_shot = False)
             sim_data[0].append(lmbda)
@@ -328,21 +352,42 @@ class DataAnalyser:
         plt.ylabel('Average Cost per player')
         plt.show()
 
+    def plot_length(self, time, arrival_rate, service_rate, servers):
+        """
+        Function to plot the average cost per player in the queueing system
+        """
+
+        a = SimulationModel(arrival_rate, service_rate, servers)
+        players, snaps = a.main_simulation_loop(time)
+
+        times = [snap for snap in snaps]
+        times.sort()
+
+        sim_data = [[time for time in times],[snaps[time].queue_length for time in times]]
+        
+        plt.plot(sim_data[0],sim_data[1])
+        plt.xlabel('Time')
+        plt.xlim(0,time)
+        plt.ylabel('Length of Queue')
+        plt.show()
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
 
-    print arguments
     arrival_rate   =eval( arguments['<arrival_rate>'])
     service_rate =eval( arguments['<service_rate>'])
     servers =eval( arguments['<servers>'])
     time =eval( arguments['<time>'])
     cost_graph =  arguments['--cost_graph']
     lmbda_graph = arguments['--lmbda_graph']
+    length_graph = arguments['--length_graph']
 
     if cost_graph:
         D = DataAnalyser()
         D.plot_expected_length_stay(time,arrival_rate,service_rate,servers)
+    if length_graph:
+        D = DataAnalyser()
+        D.plot_length(time,arrival_rate,service_rate,servers)
     if lmbda_graph:
         D = DataAnalyser()
         D.plot_varying_lambda(time,arrival_rate,service_rate,servers)
