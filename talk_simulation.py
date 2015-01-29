@@ -8,6 +8,7 @@ Arguments:
     simulation_time  the number of time units to run the model for
 
 """
+from __future__ import division
 
 import random
 
@@ -78,6 +79,7 @@ class Individual:
         self.service_time = random.expovariate(service_rate) 
         self.service_start = max(self.arrival_time, previous_exit_time) 
         self.exit_time = self.service_start + self.service_time
+        self.wait = self.exit_time - self.arrival_time
 
 class SimulationModel:
     """A class for the simulation model"""
@@ -172,14 +174,23 @@ class SimulationModel:
 
         t = 0
         previous_exit_time = 0
-       
+        
+        individuals = {}
+        no_of_individuals = 0
+
         while t < max_simulation_time:
             t += random.expovariate(self.demand) 
             new_individual = Individual(t) 
+            individuals[no_of_individuals] = new_individual
+            no_of_individuals += 1
             self.queue.append(new_individual) 
             new_individual.enter_queue(previous_exit_time, self.service_rate)
             self.clean_up_queue(t)
             previous_exit_time = new_individual.exit_time
+        
+        return individuals
+
+
 
 if __name__ == '__main__':
     
@@ -190,4 +201,17 @@ if __name__ == '__main__':
     simulation_time = eval(arguments['<simulation_time>'])
 
     Simulation_model = SimulationModel(demand, service_rate)
-    Simulation_model.main_simulation_loop(simulation_time)
+    individuals = Simulation_model.main_simulation_loop(simulation_time)
+
+    average_cost = 0
+    total_individuals = 0
+    for ID in individuals:
+        if individuals[ID].arrival_time > 200:
+            average_cost += individuals[ID].wait
+            total_individuals += 1
+
+    print "----------"
+    print "The Theoretical Value is: %s" %(1/(service_rate - demand))
+    print "The Simulated Value is %s" %(average_cost/total_individuals)
+    print "----------"
+
