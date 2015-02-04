@@ -170,12 +170,28 @@ class SimulationModel:
     def main_simulation_loop(self, max_simulation_time):
         """
         Simulates the queue for the specified number of time units
+
+        Arguments max_simulation_time the length of time to run the simulation for
+
+
+        TESTS::
+
+            >>> random.seed(22)
+            >>> s = SimulationModel(4,5)
+            >>> data = s.main_simulation_loop(50)
+            >>> ave_wait = 0
+            >>> for i in data:
+            ...     ave_wait += data[i].wait
+            >>> ave_wait /= len(data)
+            >>> ave_wait
+            0.8633433974857304
         """
 
         t = 0
         previous_exit_time = 0
         
         individuals = {}
+        self.queue = []
         no_of_individuals = 0
 
         while t < max_simulation_time:
@@ -200,18 +216,25 @@ if __name__ == '__main__':
     service_rate = eval(arguments['<service_rate>'])
     simulation_time = eval(arguments['<simulation_time>'])
 
-    Simulation_model = SimulationModel(demand, service_rate)
-    individuals = Simulation_model.main_simulation_loop(simulation_time)
+    waits = []
+    
+    for x in range(20):
 
-    average_cost = 0
-    total_individuals = 0
-    for ID in individuals:
-        if individuals[ID].arrival_time > 200:
-            average_cost += individuals[ID].wait
-            total_individuals += 1
+        Simulation_model = SimulationModel(demand, service_rate)
+        individuals = Simulation_model.main_simulation_loop(simulation_time)
+        
+        average_wait = 0
+        total_individuals = 0
+        
+        for ID in individuals:
+            if individuals[ID].arrival_time > 1000:
+                average_wait += individuals[ID].wait
+                total_individuals += 1
+
+        waits.append(average_wait/total_individuals)
 
     print "----------"
     print "The Theoretical Value is: %s" %(1/(service_rate - demand))
-    print "The Simulated Value is %s" %(average_cost/total_individuals)
+    print "The Simulated Value is %s" %(sum(waits)/len(waits))
     print "----------"
 

@@ -316,13 +316,10 @@ class Snapshot:
 
 class DataAnalyser:
     
-    def plot_expected_length_stay(self, time, arrival_rate, service_rate, servers):
+    def plot_expected_length_stay(self, snaps):
         """
         Function to plot the average wait per player in the queueing system
         """
-
-        a = SimulationModel(arrival_rate, service_rate, servers)
-        players, snaps = a.main_simulation_loop(time)
 
         times = [snap for snap in snaps]
         times.sort()
@@ -356,13 +353,10 @@ class DataAnalyser:
         plt.ylabel('Average Cost per player')
         plt.show()
 
-    def plot_length(self, time, arrival_rate, service_rate, servers):
+    def plot_length(self, snaps):
         """
         Function to plot the average wait per player in the queueing system
         """
-
-        a = SimulationModel(arrival_rate, service_rate, servers)
-        players, snaps = a.main_simulation_loop(time)
 
         times = [snap for snap in snaps]
         times.sort()
@@ -386,12 +380,15 @@ if __name__ == '__main__':
     lmbda_graph = arguments['--lmbda_graph']
     length_graph = arguments['--length_graph']
 
+    a = SimulationModel(arrival_rate, service_rate, servers)
+    players, snaps = a.main_simulation_loop(time, snap_shot = True)
+
     if wait_graph:
         D = DataAnalyser()
-        D.plot_expected_length_stay(time,arrival_rate,service_rate,servers)
+        D.plot_expected_length_stay(snaps)
     if length_graph:
         D = DataAnalyser()
-        D.plot_length(time,arrival_rate,service_rate,servers)
+        D.plot_length(snaps)
     if lmbda_graph:
         D = DataAnalyser()
-        D.plot_varying_lambda(time,arrival_rate,service_rate,servers)
+        D.plot_varying_lambda(time, arrival_rate, service_rate, servers)
